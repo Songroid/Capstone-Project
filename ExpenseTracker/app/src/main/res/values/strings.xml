@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">Expense Tracker</string>
     <string name="toolbar_share">Share</string>
+    <string name="ok">OK</string>
+    <string name="dismiss">dismiss</string>
+    <string name="date">DATE</string>
+    <string name="expense">EXPENSE</string>
+    <string name="place">PLACE</string>
+    <string name="dollar">$</string>
 </resources>
