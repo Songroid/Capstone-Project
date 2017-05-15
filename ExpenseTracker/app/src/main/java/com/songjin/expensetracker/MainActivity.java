@@ -2,6 +2,9 @@ package com.songjin.expensetracker;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
+import android.app.DialogFragment;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
@@ -16,6 +19,12 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.places.Places;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -25,11 +34,12 @@ import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
 
     private BottomSheetBehavior behavior;
     private DatePickerDialog.OnDateSetListener dateListener;
     private Calendar calendar;
+    private GoogleApiClient googleApiClient;
 
     @BindView(R.id.main_toolbar) Toolbar toolbar;
     @BindView(R.id.addExpenseBottomSheet) FrameLayout bottomSheet;
@@ -82,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
 
         // date picker setup
         calendar = Calendar.getInstance();
-
         dateListener = new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
@@ -97,6 +106,13 @@ public class MainActivity extends AppCompatActivity {
                 editTextDate.setText(sdf.format(calendar.getTime()));
             }
         };
+
+        // set up Google Play services API client
+        googleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Places.GEO_DATA_API)
+                .addApi(Places.PLACE_DETECTION_API)
+                .enableAutoManage(this, this)
+                .build();
     }
 
     @Override
@@ -146,5 +162,10 @@ public class MainActivity extends AppCompatActivity {
         new DatePickerDialog(MainActivity.this, dateListener, calendar.get(Calendar.YEAR),
                              calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH))
                             .show();
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Toast.makeText(this, connectionResult.getErrorMessage(), Toast.LENGTH_SHORT).show();
     }
 }
