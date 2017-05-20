@@ -8,7 +8,6 @@
     <android.support.v7.widget.AppCompatButton
         android:id="@+id/bottom_sheet_ok"
         android:text="@string/ok"
-        android:onClick="onOkClicked"
         android:layout_alignParentEnd="true"
         android:textColor="@android:color/white"
         android:background="@color/colorAccent"
@@ -17,7 +16,6 @@
     <android.support.v7.widget.AppCompatButton
         android:id="@+id/bottom_sheet_dismiss"
         android:text="@string/dismiss"
-        android:onClick="onDismissClicked"
         android:background="?android:attr/selectableItemBackground"
         android:layout_toStartOf="@id/bottom_sheet_ok"
         style="@style/BottomSheetButton"/>
@@ -39,7 +37,6 @@
 
             <EditText
                 android:id="@+id/edittext_date"
-                android:onClick="onDateClicked"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/date"
