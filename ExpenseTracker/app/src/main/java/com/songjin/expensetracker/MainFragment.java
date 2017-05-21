@@ -5,10 +5,15 @@ import android.app.DatePickerDialog;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,6 +29,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment;
 import com.songjin.expensetracker.event.OnBackPressedEvent;
 
 import org.greenrobot.eventbus.EventBus;
@@ -43,6 +49,8 @@ import butterknife.Unbinder;
 
 public class MainFragment extends Fragment implements GoogleApiClient.OnConnectionFailedListener {
 
+    private static final String PLACE_FRAGMENT_TAG = "placeFragment";
+
     private Unbinder unbinder;
 
     private BottomSheetBehavior behavior;
@@ -53,6 +61,7 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
     @BindView(R.id.addExpenseBottomSheet) FrameLayout bottomSheet;
     @BindView(R.id.fab) FloatingActionButton fab;
     @BindView(R.id.edittext_date) EditText editTextDate;
+    @BindView(R.id.expenseListView) RecyclerView listView;
 
     @BindString(R.string.app_name) String appName;
 
@@ -113,6 +122,11 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
             }
         });
 
+        // list setup
+        MainListAdapter adapter = new MainListAdapter(getContext());
+        listView.setAdapter(adapter);
+        listView.setLayoutManager(new LinearLayoutManager(getContext()));
+
         // date picker setup
         calendar = Calendar.getInstance();
         dateListener = new DatePickerDialog.OnDateSetListener() {
@@ -131,6 +145,21 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
         };
 
         return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        FragmentManager fm = getChildFragmentManager();
+        SupportPlaceAutocompleteFragment placeFragment = (SupportPlaceAutocompleteFragment) fm.
+                findFragmentByTag(PLACE_FRAGMENT_TAG);
+        if (placeFragment == null) {
+            placeFragment = new SupportPlaceAutocompleteFragment();
+            FragmentTransaction ft = fm.beginTransaction();
+            ft.add(R.id.placeFragmentHolder, placeFragment, PLACE_FRAGMENT_TAG);
+            ft.commit();
+            fm.executePendingTransactions();
+        }
     }
 
     @Override

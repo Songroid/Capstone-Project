@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        // Dismiss the bottom sheet first
+        // dismiss the bottom sheet first
         if (findViewById(R.id.bottom_sheet_holder).getVisibility() == View.VISIBLE) {
             EventBus.getDefault().post(new OnBackPressedEvent());
         } else {

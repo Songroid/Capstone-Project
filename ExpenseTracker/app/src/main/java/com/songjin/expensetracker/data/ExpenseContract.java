@@ -28,6 +28,7 @@ public class ExpenseContract {
         public static final String COLUMN_DATE = "expenseDate";
         public static final String COLUMN_ADDRESS = "expenseAddress";
         public static final String COLUMN_NOTE = "expenseNote";
+        public static final String COLUMN_PRICE = "expensePrice";
 
         public static Uri buildExpenseUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);

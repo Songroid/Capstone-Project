@@ -4,4 +4,6 @@
     <dimen name="edge_margin_small">8dp</dimen>
     <dimen name="bottom_sheet_height">200dp</dimen>
     <dimen name="bottom_sheet_border_height">2dp</dimen>
+    <dimen name="main_list_height">72dp</dimen>
+
 </resources>
