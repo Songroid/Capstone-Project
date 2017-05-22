@@ -4,6 +4,7 @@
 
     <application
         android:allowBackup="true"
+        android:name=".ExpenseApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -21,13 +22,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <provider
-            android:name=".data.ExpenseProvider"
-            android:authorities="com.songjin.expensetracker"
-            android:exported="false"
-            android:protectionLevel="signature"
-            android:syncable="true"/>
 
     </application>
 

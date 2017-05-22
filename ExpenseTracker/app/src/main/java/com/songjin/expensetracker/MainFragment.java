@@ -39,12 +39,16 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
+import io.requery.Persistable;
+import io.requery.reactivex.ReactiveEntityStore;
 
 
 public class MainFragment extends Fragment implements GoogleApiClient.OnConnectionFailedListener {
@@ -56,6 +60,9 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
     private BottomSheetBehavior behavior;
     private DatePickerDialog.OnDateSetListener dateListener;
     private Calendar calendar;
+
+    private MainListAdapter adapter;
+    private ExecutorService executor;
 
     @BindView(R.id.main_toolbar) Toolbar toolbar;
     @BindView(R.id.addExpenseBottomSheet) FrameLayout bottomSheet;
@@ -123,7 +130,11 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
         });
 
         // list setup
-        MainListAdapter adapter = new MainListAdapter(getContext());
+        ReactiveEntityStore<Persistable> data = ((ExpenseApplication) getActivity().getApplication())
+                .getData();
+        executor = Executors.newSingleThreadExecutor();
+        adapter = new MainListAdapter(getContext(), data);
+        adapter.setExecutor(executor);
         listView.setAdapter(adapter);
         listView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -169,6 +180,12 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
     }
 
     @Override
+    public void onResume() {
+        adapter.queryAsync();
+        super.onResume();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu, menu);
     }
@@ -205,6 +222,13 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
     public void onDestroyView() {
         super.onDestroyView();
         unbinder.unbind();
+    }
+
+    @Override
+    public void onDestroy() {
+        executor.shutdown();
+        adapter.close();
+        super.onDestroy();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

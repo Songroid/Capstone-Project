@@ -2,52 +2,52 @@ package com.songjin.expensetracker;
 
 
 import android.content.Context;
-import android.databinding.DataBindingUtil;
-import android.databinding.ViewDataBinding;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
-import com.songjin.expensetracker.data.Expense;
+import com.songjin.expensetracker.data.ExpenseEntity;
+import com.songjin.expensetracker.databinding.ListItemBinding;
 
-public class MainListAdapter extends RecyclerView.Adapter<MainListAdapter.ViewHolder> {
+import io.requery.Persistable;
+import io.requery.android.QueryRecyclerAdapter;
+import io.requery.query.Result;
+import io.requery.reactivex.ReactiveEntityStore;
+
+/* package */ class MainListAdapter extends QueryRecyclerAdapter<ExpenseEntity, BindingHolder<ListItemBinding>>
+        implements View.OnClickListener {
+
+    private ReactiveEntityStore<Persistable> data;
 
     private Context context;
 
-    public MainListAdapter(Context context) {
+    /* package */ MainListAdapter(Context context, ReactiveEntityStore<Persistable> data) {
+        super(ExpenseEntity.$TYPE);
         this.context = context;
-    }
-
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        private ViewDataBinding binding;
-
-        public ViewHolder(View itemView) {
-            super(itemView);
-            binding = DataBindingUtil.bind(itemView);
-        }
-
-        public ViewDataBinding getBinding() {
-            return binding;
-        }
+        this.data = data;
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.list_item, parent, false);
-        return new ViewHolder(v);
+    public Result<ExpenseEntity> performQuery() {
+        return data.select(ExpenseEntity.class).orderBy(ExpenseEntity.DATE.lower()).get();
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        Expense expense = Expense.create("05/20/17", "New China Food", "", "$10.00");
-        holder.getBinding().setVariable(BR.expense, expense);
-        holder.getBinding().executePendingBindings();
+    public BindingHolder<ListItemBinding> onCreateViewHolder(ViewGroup parent, int viewType) {
+        ListItemBinding binding = ListItemBinding.inflate(LayoutInflater.from(parent.getContext()));
+        binding.getRoot().setTag(binding);
+        binding.getRoot().setOnClickListener(this);
+        return new BindingHolder<>(binding);
     }
 
     @Override
-    public int getItemCount() {
-        return 3;
+    public void onBindViewHolder(ExpenseEntity item, BindingHolder<ListItemBinding> holder, int position) {
+        holder.binding.setExpense(item);
+    }
+
+    @Override
+    public void onClick(View v) {
+        Toast.makeText(context, "Clicked!", Toast.LENGTH_SHORT).show();
     }
 }

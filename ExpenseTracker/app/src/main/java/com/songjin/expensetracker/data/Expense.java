@@ -1,15 +1,28 @@
 package com.songjin.expensetracker.data;
 
-import com.google.auto.value.AutoValue;
+import android.databinding.Bindable;
+import android.databinding.Observable;
+import android.os.Parcelable;
 
-@AutoValue
-public abstract class Expense {
-    public abstract String date();
-    public abstract String name();
-    public abstract String note();
-    public abstract String price();
+import io.requery.Entity;
+import io.requery.Generated;
+import io.requery.Index;
+import io.requery.Key;
+import io.requery.Persistable;
 
-    public static Expense create(String date, String name, String note, String price) {
-        return new AutoValue_Expense(date, name, note, price);
-    }
+@Entity
+public interface Expense extends Observable, Parcelable, Persistable {
+
+    @Key @Generated
+    int getId();
+
+    @Bindable
+    @Index(value = "date_index")
+    String getDate();
+    @Bindable
+    String getName();
+    @Bindable
+    String getNote();
+    @Bindable
+    String getPrice();
 }
