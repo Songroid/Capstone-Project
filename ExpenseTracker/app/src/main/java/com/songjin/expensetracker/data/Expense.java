@@ -22,7 +22,5 @@ public interface Expense extends Observable, Parcelable, Persistable {
     @Bindable
     String getName();
     @Bindable
-    String getNote();
-    @Bindable
     String getPrice();
 }

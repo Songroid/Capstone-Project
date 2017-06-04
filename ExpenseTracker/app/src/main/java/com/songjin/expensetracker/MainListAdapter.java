@@ -2,6 +2,7 @@ package com.songjin.expensetracker;
 
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,14 +19,16 @@ import io.requery.reactivex.ReactiveEntityStore;
 /* package */ class MainListAdapter extends QueryRecyclerAdapter<ExpenseEntity, BindingHolder<ListItemBinding>>
         implements View.OnClickListener {
 
+    private static final String TAG = MainListAdapter.class.getSimpleName();
+
     private ReactiveEntityStore<Persistable> data;
 
     private Context context;
 
-    /* package */ MainListAdapter(Context context, ReactiveEntityStore<Persistable> data) {
+    /* package */ MainListAdapter(Context context) {
         super(ExpenseEntity.$TYPE);
         this.context = context;
-        this.data = data;
+        data = ((ExpenseApplication) context.getApplicationContext()).getData();
     }
 
     @Override

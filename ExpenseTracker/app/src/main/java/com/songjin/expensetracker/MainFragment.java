@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -30,6 +31,8 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment;
+import com.songjin.expensetracker.data.Expense;
+import com.songjin.expensetracker.data.ExpenseEntity;
 import com.songjin.expensetracker.event.OnBackPressedEvent;
 
 import org.greenrobot.eventbus.EventBus;
@@ -47,6 +50,10 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import io.requery.Persistable;
 import io.requery.reactivex.ReactiveEntityStore;
 
@@ -64,11 +71,17 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
     private MainListAdapter adapter;
     private ExecutorService executor;
 
+    private InputMethodManager imm;
+
+    private ReactiveEntityStore<Persistable> data;
+
     @BindView(R.id.main_toolbar) Toolbar toolbar;
     @BindView(R.id.addExpenseBottomSheet) FrameLayout bottomSheet;
     @BindView(R.id.fab) FloatingActionButton fab;
-    @BindView(R.id.edittext_date) EditText editTextDate;
     @BindView(R.id.expenseListView) RecyclerView listView;
+
+    @BindView(R.id.edittext_date) EditText editTextDate;
+    @BindView(R.id.edittext_expense) EditText editTextExpense;
 
     @BindString(R.string.app_name) String appName;
 
@@ -85,6 +98,9 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
         super.onCreate(savedInstanceState);
 
         setHasOptionsMenu(true);
+
+        imm = (InputMethodManager) getActivity().getSystemService(
+                Activity.INPUT_METHOD_SERVICE);
     }
 
     @Override
@@ -130,10 +146,10 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
         });
 
         // list setup
-        ReactiveEntityStore<Persistable> data = ((ExpenseApplication) getActivity().getApplication())
-                .getData();
+        data = ((ExpenseApplication) getActivity().getApplication()).getData();
+
         executor = Executors.newSingleThreadExecutor();
-        adapter = new MainListAdapter(getContext(), data);
+        adapter = new MainListAdapter(getContext());
         adapter.setExecutor(executor);
         listView.setAdapter(adapter);
         listView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -161,9 +177,10 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         FragmentManager fm = getChildFragmentManager();
-        SupportPlaceAutocompleteFragment placeFragment = (SupportPlaceAutocompleteFragment) fm.
-                findFragmentByTag(PLACE_FRAGMENT_TAG);
+        SupportPlaceAutocompleteFragment placeFragment = getAutoCompleteFrag();
+
         if (placeFragment == null) {
             placeFragment = new SupportPlaceAutocompleteFragment();
             FragmentTransaction ft = fm.beginTransaction();
@@ -190,28 +207,6 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
         inflater.inflate(R.menu.menu, menu);
     }
 
-    @OnClick(R.id.bottom_sheet_ok)
-    public void onOkClicked() {
-        onDismissClicked();
-    }
-
-    @OnClick(R.id.bottom_sheet_dismiss)
-    public void onDismissClicked() {
-        behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(
-                Activity.INPUT_METHOD_SERVICE);
-        if (imm.isActive()) {
-            imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
-        }
-    }
-
-    @OnClick(R.id.edittext_date)
-    public void onDateClicked() {
-        new DatePickerDialog(getContext(), dateListener, calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH))
-                .show();
-    }
-
     @Override
     public void onStop() {
         super.onStop();
@@ -231,6 +226,65 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
         super.onDestroy();
     }
 
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Toast.makeText(getContext(), connectionResult.getErrorMessage(), Toast.LENGTH_SHORT).show();
+    }
+
+    @OnClick(R.id.bottom_sheet_ok)
+    public void onOkClicked() {
+
+        boolean isAutoCompleteEmpty = true;
+        EditText searchInput =((EditText)getAutoCompleteFrag().getView()
+                .findViewById(R.id.place_autocomplete_search_input));
+        if (searchInput != null) {
+            isAutoCompleteEmpty = searchInput.getText().toString().isEmpty();
+        }
+        boolean isDateEmpty = editTextDate.getText().toString().isEmpty();
+        boolean isExpenseEmpty = editTextExpense.getText().toString().isEmpty();
+
+        if (isAutoCompleteEmpty || isDateEmpty || isExpenseEmpty) {
+            // require no empty fields
+            Snackbar.make(getView().findViewById(R.id.container), "Please fill in all the fields",
+                    Snackbar.LENGTH_SHORT).show();
+        } else {
+            ExpenseEntity expense = new ExpenseEntity();
+            expense.setDate(editTextDate.getText().toString());
+            expense.setName(searchInput.getText().toString());
+            expense.setPrice(editTextExpense.getText().toString());
+
+            // save the expense
+            Single<ExpenseEntity> single = data.insert(expense);
+            single.subscribeOn(Schedulers.single())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Consumer<Expense>() {
+                        @Override
+                        public void accept(Expense expense) throws Exception {
+                            onDismissClicked();
+                            clearFields();
+                        }
+                    });
+
+            // update the list
+            adapter.queryAsync();
+        }
+    }
+
+    @OnClick(R.id.bottom_sheet_dismiss)
+    public void onDismissClicked() {
+        behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        if (editTextExpense.isFocused()) {
+            imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+        }
+    }
+
+    @OnClick(R.id.edittext_date)
+    public void onDateClicked() {
+        new DatePickerDialog(getContext(), dateListener, calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH))
+                .show();
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMotionEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -240,7 +294,11 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
                 bottomSheet.getGlobalVisibleRect(outRect);
 
                 if(!outRect.contains((int)event.getRawX(), (int)event.getRawY())) {
-                    onDismissClicked();
+                    if (editTextExpense.isFocused()) {
+                        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+                    } else {
+                        behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                    }
                 }
             }
         }
@@ -253,8 +311,17 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
         }
     }
 
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Toast.makeText(getContext(), connectionResult.getErrorMessage(), Toast.LENGTH_SHORT).show();
+    @Nullable
+    private SupportPlaceAutocompleteFragment getAutoCompleteFrag() {
+        return (SupportPlaceAutocompleteFragment) getChildFragmentManager().
+                findFragmentByTag(PLACE_FRAGMENT_TAG);
+    }
+
+    private void clearFields() {
+        if (getAutoCompleteFrag() != null) {
+            getAutoCompleteFrag().setText("");
+        }
+        editTextDate.setText("");
+        editTextExpense.setText("");
     }
 }
