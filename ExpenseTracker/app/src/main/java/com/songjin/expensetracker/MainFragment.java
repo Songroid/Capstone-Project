@@ -33,7 +33,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment;
 import com.songjin.expensetracker.data.Expense;
 import com.songjin.expensetracker.data.ExpenseEntity;
-import com.songjin.expensetracker.event.OnBackPressedEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -101,6 +100,8 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
 
         imm = (InputMethodManager) getActivity().getSystemService(
                 Activity.INPUT_METHOD_SERVICE);
+
+        data = ((ExpenseApplication) getActivity().getApplication()).getData();
     }
 
     @Override
@@ -146,8 +147,6 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
         });
 
         // list setup
-        data = ((ExpenseApplication) getActivity().getApplication()).getData();
-
         executor = Executors.newSingleThreadExecutor();
         adapter = new MainListAdapter(getContext());
         adapter.setExecutor(executor);
@@ -264,9 +263,6 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
                             clearFields();
                         }
                     });
-
-            // update the list
-            adapter.queryAsync();
         }
     }
 
@@ -275,6 +271,7 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
         behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         if (editTextExpense.isFocused()) {
             imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+            editTextExpense.clearFocus();
         }
     }
 
@@ -294,20 +291,9 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
                 bottomSheet.getGlobalVisibleRect(outRect);
 
                 if(!outRect.contains((int)event.getRawX(), (int)event.getRawY())) {
-                    if (editTextExpense.isFocused()) {
-                        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
-                    } else {
-                        behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-                    }
+                    onDismissClicked();
                 }
             }
-        }
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onBackPressed(OnBackPressedEvent event) {
-        if (behavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-            behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         }
     }
 

@@ -5,8 +5,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MotionEvent;
 
-import com.songjin.expensetracker.event.OnBackPressedEvent;
-
 import org.greenrobot.eventbus.EventBus;
 
 public class MainActivity extends AppCompatActivity {
@@ -25,15 +23,5 @@ public class MainActivity extends AppCompatActivity {
     public boolean dispatchTouchEvent(MotionEvent event) {
         EventBus.getDefault().post(event);
         return super.dispatchTouchEvent(event);
-    }
-
-    @Override
-    public void onBackPressed() {
-        // dismiss the bottom sheet first
-        if (!findViewById(R.id.fab).isShown()) {
-            EventBus.getDefault().post(new OnBackPressedEvent());
-        } else {
-            super.onBackPressed();
-        }
     }
 }
