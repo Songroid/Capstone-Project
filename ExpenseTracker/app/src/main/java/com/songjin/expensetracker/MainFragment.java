@@ -232,7 +232,6 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
 
     @OnClick(R.id.bottom_sheet_ok)
     public void onOkClicked() {
-
         boolean isAutoCompleteEmpty = true;
         EditText searchInput =((EditText)getAutoCompleteFrag().getView()
                 .findViewById(R.id.place_autocomplete_search_input));
@@ -263,6 +262,7 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
                             clearFields();
                         }
                     });
+            adapter.queryAsync();
         }
     }
 

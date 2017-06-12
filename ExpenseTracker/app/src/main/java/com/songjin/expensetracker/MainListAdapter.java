@@ -35,7 +35,8 @@ import io.requery.reactivex.ReactiveEntityStore;
 
     @Override
     public BindingHolder<ListItemBinding> onCreateViewHolder(ViewGroup parent, int viewType) {
-        ListItemBinding binding = ListItemBinding.inflate(LayoutInflater.from(parent.getContext()));
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        ListItemBinding binding = ListItemBinding.inflate(inflater);
         binding.getRoot().setTag(binding);
         binding.getRoot().setOnClickListener(this);
         return new BindingHolder<>(binding);

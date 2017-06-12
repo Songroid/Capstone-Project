@@ -19,8 +19,10 @@ public interface Expense extends Observable, Parcelable, Persistable {
     @Bindable
     @Index(value = "date_index")
     String getDate();
+
     @Bindable
     String getName();
+
     @Bindable
     String getPrice();
 }
