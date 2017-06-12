@@ -5,24 +5,24 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.songjin.expensetracker.data.ExpenseEntity;
-import com.songjin.expensetracker.databinding.ListItemBinding;
+import com.songjin.expensetracker.databinding.ExpenseItemBinding;
 
 import io.requery.Persistable;
 import io.requery.android.QueryRecyclerAdapter;
 import io.requery.query.Result;
 import io.requery.reactivex.ReactiveEntityStore;
 
-/* package */ class MainListAdapter extends QueryRecyclerAdapter<ExpenseEntity, BindingHolder<ListItemBinding>>
+/* package */ public class ExpenseAdapter extends QueryRecyclerAdapter<ExpenseEntity, BindingHolder<ExpenseItemBinding>>
         implements View.OnClickListener {
 
     private ReactiveEntityStore<Persistable> data;
 
     private Context context;
 
-    /* package */ MainListAdapter(Context context) {
+    /* package */
+    public ExpenseAdapter(Context context) {
         super(ExpenseEntity.$TYPE);
         this.context = context;
         data = ((ExpenseApplication) context.getApplicationContext()).getData();
@@ -34,21 +34,24 @@ import io.requery.reactivex.ReactiveEntityStore;
     }
 
     @Override
-    public BindingHolder<ListItemBinding> onCreateViewHolder(ViewGroup parent, int viewType) {
+    public BindingHolder<ExpenseItemBinding> onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        ListItemBinding binding = ListItemBinding.inflate(inflater);
+        ExpenseItemBinding binding = ExpenseItemBinding.inflate(inflater);
         binding.getRoot().setTag(binding);
         binding.getRoot().setOnClickListener(this);
         return new BindingHolder<>(binding);
     }
 
     @Override
-    public void onBindViewHolder(ExpenseEntity item, BindingHolder<ListItemBinding> holder, int position) {
+    public void onBindViewHolder(ExpenseEntity item, BindingHolder<ExpenseItemBinding> holder, int position) {
         holder.binding.setExpense(item);
     }
 
     @Override
     public void onClick(View v) {
-        Toast.makeText(context, "Clicked!", Toast.LENGTH_SHORT).show();
+        ExpenseItemBinding binding = (ExpenseItemBinding) v.getTag();
+        if (binding != null) {
+
+        }
     }
 }

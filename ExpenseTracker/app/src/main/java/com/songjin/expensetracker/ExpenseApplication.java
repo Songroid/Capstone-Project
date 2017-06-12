@@ -23,7 +23,7 @@ public class ExpenseApplication extends Application {
         StrictMode.enableDefaults();
     }
 
-    ReactiveEntityStore<Persistable> getData() {
+    public ReactiveEntityStore<Persistable> getData() {
         if (dataStore == null) {
             // override onUpgrade to handle migrating to a new version
             DatabaseSource source = new DatabaseSource(this, Models.DEFAULT, 1);

@@ -1,4 +1,4 @@
-package com.songjin.expensetracker;
+package com.songjin.expensetracker.fragment;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
@@ -31,6 +31,9 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment;
+import com.songjin.expensetracker.ExpenseAdapter;
+import com.songjin.expensetracker.ExpenseApplication;
+import com.songjin.expensetracker.R;
 import com.songjin.expensetracker.data.Expense;
 import com.songjin.expensetracker.data.ExpenseEntity;
 
@@ -57,7 +60,7 @@ import io.requery.Persistable;
 import io.requery.reactivex.ReactiveEntityStore;
 
 
-public class MainFragment extends Fragment implements GoogleApiClient.OnConnectionFailedListener {
+public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConnectionFailedListener {
 
     private static final String PLACE_FRAGMENT_TAG = "placeFragment";
 
@@ -67,7 +70,7 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
     private DatePickerDialog.OnDateSetListener dateListener;
     private Calendar calendar;
 
-    private MainListAdapter adapter;
+    private ExpenseAdapter adapter;
     private ExecutorService executor;
 
     private InputMethodManager imm;
@@ -84,12 +87,12 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
 
     @BindString(R.string.app_name) String appName;
 
-    public MainFragment() {
+    public ExpenseFragment() {
         // Required empty public constructor
     }
 
-    public static MainFragment newInstance() {
-        return new MainFragment();
+    public static ExpenseFragment newInstance() {
+        return new ExpenseFragment();
     }
 
     @Override
@@ -148,7 +151,7 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
 
         // list setup
         executor = Executors.newSingleThreadExecutor();
-        adapter = new MainListAdapter(getContext());
+        adapter = new ExpenseAdapter(getContext());
         adapter.setExecutor(executor);
         listView.setAdapter(adapter);
         listView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -249,7 +252,7 @@ public class MainFragment extends Fragment implements GoogleApiClient.OnConnecti
             ExpenseEntity expense = new ExpenseEntity();
             expense.setDate(editTextDate.getText().toString());
             expense.setName(searchInput.getText().toString());
-            expense.setPrice(editTextExpense.getText().toString());
+            expense.setPrice("$" + editTextExpense.getText().toString());
 
             // save the expense
             Single<ExpenseEntity> single = data.insert(expense);
