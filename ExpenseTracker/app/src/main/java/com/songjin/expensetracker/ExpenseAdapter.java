@@ -8,6 +8,9 @@ import android.view.ViewGroup;
 
 import com.songjin.expensetracker.data.ExpenseEntity;
 import com.songjin.expensetracker.databinding.ExpenseItemBinding;
+import com.songjin.expensetracker.event.ExpenseClickEvent;
+
+import org.greenrobot.eventbus.EventBus;
 
 import io.requery.Persistable;
 import io.requery.android.QueryRecyclerAdapter;
@@ -51,7 +54,7 @@ import io.requery.reactivex.ReactiveEntityStore;
     public void onClick(View v) {
         ExpenseItemBinding binding = (ExpenseItemBinding) v.getTag();
         if (binding != null) {
-
+            EventBus.getDefault().post(new ExpenseClickEvent(binding.getExpense()));
         }
     }
 }

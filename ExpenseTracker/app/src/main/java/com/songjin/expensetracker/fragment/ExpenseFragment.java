@@ -16,6 +16,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.transition.Slide;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -30,12 +32,18 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment;
+import com.malinskiy.materialicons.IconDrawable;
+import com.malinskiy.materialicons.Iconify;
 import com.songjin.expensetracker.ExpenseAdapter;
 import com.songjin.expensetracker.ExpenseApplication;
 import com.songjin.expensetracker.R;
 import com.songjin.expensetracker.data.Expense;
 import com.songjin.expensetracker.data.ExpenseEntity;
+import com.songjin.expensetracker.event.ExpenseClickEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -60,7 +68,8 @@ import io.requery.Persistable;
 import io.requery.reactivex.ReactiveEntityStore;
 
 
-public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConnectionFailedListener {
+public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConnectionFailedListener,
+        PlaceSelectionListener {
 
     private static final String PLACE_FRAGMENT_TAG = "placeFragment";
 
@@ -86,10 +95,6 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     @BindView(R.id.edittext_expense) EditText editTextExpense;
 
     @BindString(R.string.app_name) String appName;
-
-    public ExpenseFragment() {
-        // Required empty public constructor
-    }
 
     public static ExpenseFragment newInstance() {
         return new ExpenseFragment();
@@ -185,6 +190,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
         if (placeFragment == null) {
             placeFragment = new SupportPlaceAutocompleteFragment();
+            placeFragment.setOnPlaceSelectedListener(this);
             FragmentTransaction ft = fm.beginTransaction();
             ft.add(R.id.placeFragmentHolder, placeFragment, PLACE_FRAGMENT_TAG);
             ft.commit();
@@ -206,7 +212,11 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu, menu);
+        inflater.inflate(R.menu.main_menu, menu);
+        menu.findItem(R.id.share).setIcon(new IconDrawable(getContext(), Iconify.IconValue.zmdi_share)
+                    .colorRes(android.R.color.white)
+                    .actionBarSize());
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
@@ -286,6 +296,27 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onExpenseClicked(ExpenseClickEvent event) {
+        Expense expense = event.getExpense();
+        if (expense != null) {
+            FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
+
+            Fragment detailFragment = getActivity().getSupportFragmentManager()
+                    .findFragmentByTag(DetailFragment.TAG);
+            if (detailFragment == null) {
+                detailFragment = DetailFragment.newInstance(expense);
+            }
+            Slide slideRight = new Slide(Gravity.RIGHT);
+            detailFragment.setEnterTransition(slideRight);
+            detailFragment.setExitTransition(slideRight);
+
+            ft.replace(R.id.fragment_holder, detailFragment);
+            ft.addToBackStack(null);
+            ft.commit();
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMotionEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             if (behavior.getState()==BottomSheetBehavior.STATE_EXPANDED) {
@@ -312,5 +343,14 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         }
         editTextDate.setText("");
         editTextExpense.setText("");
+    }
+
+    @Override
+    public void onPlaceSelected(Place place) {
+    }
+
+    @Override
+    public void onError(Status status) {
+
     }
 }
