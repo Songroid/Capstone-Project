@@ -45,6 +45,8 @@ dependencies {
     annotationProcessor 'com.google.auto.value:auto-value:1.3'
     compile 'com.ryanharter.auto.value:auto-value-parcel-adapter:0.2.5'
     annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:0.2.5'
+    provided 'me.mattlogan.auto.value:auto-value-firebase-annotation:1.1.0'
+    annotationProcessor 'me.mattlogan.auto.value:auto-value-firebase:1.1.0'
 }
 
 repositories {

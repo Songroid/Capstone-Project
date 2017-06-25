@@ -34,6 +34,8 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.malinskiy.materialicons.IconDrawable;
 import com.malinskiy.materialicons.Iconify;
 
@@ -241,7 +243,9 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
                                                .setPrice("$" + editTextExpense.getText().toString())
                                                .build();
             // save the expense
-
+            pushValue(expense);
+            clearFields();
+            onDismissClicked();
         }
     }
 
@@ -321,5 +325,11 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
                     .colorRes(android.R.color.tertiary_text_light)
                     .sizeDp(32));
         }
+    }
+
+    private void pushValue(Expense expense) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference(Expense.TAG);
+        myRef.push().setValue(expense.toFirebaseValue());
     }
 }

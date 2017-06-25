@@ -4,11 +4,16 @@ import android.os.Parcelable;
 
 import com.google.auto.value.AutoValue;
 
-@AutoValue
+import me.mattlogan.auto.value.firebase.annotation.FirebaseValue;
+
+@AutoValue @FirebaseValue
 public abstract class Expense implements Parcelable {
-    abstract String date();
-    abstract String name();
-    abstract String price();
+
+    static String TAG = Expense.class.getSimpleName();
+
+    public abstract String date();
+    public abstract String name();
+    public abstract String price();
 
     static Builder builder() {
         return new AutoValue_Expense.Builder().setDate("").setName("").setPrice("");
@@ -20,5 +25,9 @@ public abstract class Expense implements Parcelable {
         abstract Builder setName(String value);
         abstract Builder setPrice(String value);
         abstract Expense build();
+    }
+
+    public Object toFirebaseValue() {
+        return new AutoValue_Expense.FirebaseValue(this);
     }
 }
