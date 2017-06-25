@@ -2,7 +2,7 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android">
 
     <data>
-        <variable name="expense" type="com.songjin.expensetracker.data.Expense"/>
+        <variable name="expense" type="com.songjin.expensetracker.Expense"/>
     </data>
 
     <RelativeLayout

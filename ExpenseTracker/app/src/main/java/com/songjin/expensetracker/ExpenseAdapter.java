@@ -2,52 +2,43 @@ package com.songjin.expensetracker;
 
 
 import android.content.Context;
-import android.view.LayoutInflater;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.songjin.expensetracker.data.ExpenseEntity;
 import com.songjin.expensetracker.databinding.ExpenseItemBinding;
-import com.songjin.expensetracker.event.ExpenseClickEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
-import io.requery.Persistable;
-import io.requery.android.QueryRecyclerAdapter;
-import io.requery.query.Result;
-import io.requery.reactivex.ReactiveEntityStore;
+import java.util.List;
 
-/* package */ public class ExpenseAdapter extends QueryRecyclerAdapter<ExpenseEntity, BindingHolder<ExpenseItemBinding>>
-        implements View.OnClickListener {
-
-    private ReactiveEntityStore<Persistable> data;
+/* package */ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseViewHolder> implements View.OnClickListener {
+    
+    private List<Expense> data;
 
     private Context context;
 
-    /* package */
-    public ExpenseAdapter(Context context) {
-        super(ExpenseEntity.$TYPE);
+    public ExpenseAdapter(Context context, List<Expense> data) {
+        this.data = data;
         this.context = context;
-        data = ((ExpenseApplication) context.getApplicationContext()).getData();
     }
 
     @Override
-    public Result<ExpenseEntity> performQuery() {
-        return data.select(ExpenseEntity.class).orderBy(ExpenseEntity.DATE.lower()).get();
+    public ExpenseViewHolder onCreateViewHolder(ViewGroup parent, int i) {
+        return new ExpenseViewHolder(parent);
     }
 
     @Override
-    public BindingHolder<ExpenseItemBinding> onCreateViewHolder(ViewGroup parent, int viewType) {
-        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        ExpenseItemBinding binding = ExpenseItemBinding.inflate(inflater);
-        binding.getRoot().setTag(binding);
-        binding.getRoot().setOnClickListener(this);
-        return new BindingHolder<>(binding);
+    public void onBindViewHolder(ExpenseViewHolder holder, int i) {
+        final Expense expense = data.get(i);
+
+        holder.binding.setExpense(expense);
+        holder.binding.executePendingBindings();
     }
 
     @Override
-    public void onBindViewHolder(ExpenseEntity item, BindingHolder<ExpenseItemBinding> holder, int position) {
-        holder.binding.setExpense(item);
+    public int getItemCount() {
+        return data.size();
     }
 
     @Override

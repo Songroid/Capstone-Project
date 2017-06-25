@@ -1,6 +1,6 @@
-package com.songjin.expensetracker.event;
+package com.songjin.expensetracker;
 
-import com.songjin.expensetracker.data.Expense;
+import com.songjin.expensetracker.Expense;
 
 public class ExpenseClickEvent {
     private Expense expense;

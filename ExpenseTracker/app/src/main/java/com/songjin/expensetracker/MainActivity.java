@@ -1,11 +1,11 @@
-package com.songjin.expensetracker.activity;
+package com.songjin.expensetracker;
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MotionEvent;
 
-import com.songjin.expensetracker.fragment.ExpenseFragment;
+import com.songjin.expensetracker.ExpenseFragment;
 import com.songjin.expensetracker.R;
 
 import org.greenrobot.eventbus.EventBus;

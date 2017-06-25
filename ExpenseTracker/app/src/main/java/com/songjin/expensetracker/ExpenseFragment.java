@@ -1,4 +1,4 @@
-package com.songjin.expensetracker.fragment;
+package com.songjin.expensetracker;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
@@ -28,48 +28,33 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment;
 import com.malinskiy.materialicons.IconDrawable;
 import com.malinskiy.materialicons.Iconify;
-import com.songjin.expensetracker.ExpenseAdapter;
-import com.songjin.expensetracker.ExpenseApplication;
-import com.songjin.expensetracker.R;
-import com.songjin.expensetracker.data.Expense;
-import com.songjin.expensetracker.data.ExpenseEntity;
-import com.songjin.expensetracker.event.ExpenseClickEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Consumer;
-import io.reactivex.schedulers.Schedulers;
-import io.requery.Persistable;
-import io.requery.reactivex.ReactiveEntityStore;
 
 
-public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConnectionFailedListener,
-        PlaceSelectionListener {
+public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConnectionFailedListener {
 
     private static final String PLACE_FRAGMENT_TAG = "placeFragment";
 
@@ -80,16 +65,17 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     private Calendar calendar;
 
     private ExpenseAdapter adapter;
-    private ExecutorService executor;
 
     private InputMethodManager imm;
 
-    private ReactiveEntityStore<Persistable> data;
+    private List<Expense> data;
 
     @BindView(R.id.main_toolbar) Toolbar toolbar;
     @BindView(R.id.addExpenseBottomSheet) FrameLayout bottomSheet;
     @BindView(R.id.fab) FloatingActionButton fab;
     @BindView(R.id.expenseListView) RecyclerView listView;
+    @BindView(R.id.emptyView) View emptyView;
+    @BindView(R.id.emptyImage) ImageView emptyImage;
 
     @BindView(R.id.edittext_date) EditText editTextDate;
     @BindView(R.id.edittext_expense) EditText editTextExpense;
@@ -109,7 +95,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         imm = (InputMethodManager) getActivity().getSystemService(
                 Activity.INPUT_METHOD_SERVICE);
 
-        data = ((ExpenseApplication) getActivity().getApplication()).getData();
+        data = new ArrayList<>();
     }
 
     @Override
@@ -155,11 +141,11 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         });
 
         // list setup
-        executor = Executors.newSingleThreadExecutor();
-        adapter = new ExpenseAdapter(getContext());
-        adapter.setExecutor(executor);
+        adapter = new ExpenseAdapter(getContext(), data);
         listView.setAdapter(adapter);
         listView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        updateEmptyView();
 
         // date picker setup
         calendar = Calendar.getInstance();
@@ -190,7 +176,6 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
         if (placeFragment == null) {
             placeFragment = new SupportPlaceAutocompleteFragment();
-            placeFragment.setOnPlaceSelectedListener(this);
             FragmentTransaction ft = fm.beginTransaction();
             ft.add(R.id.placeFragmentHolder, placeFragment, PLACE_FRAGMENT_TAG);
             ft.commit();
@@ -206,7 +191,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
     @Override
     public void onResume() {
-        adapter.queryAsync();
+        // TODO: sync
         super.onResume();
     }
 
@@ -232,13 +217,6 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     }
 
     @Override
-    public void onDestroy() {
-        executor.shutdown();
-        adapter.close();
-        super.onDestroy();
-    }
-
-    @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Toast.makeText(getContext(), connectionResult.getErrorMessage(), Toast.LENGTH_SHORT).show();
     }
@@ -246,8 +224,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     @OnClick(R.id.bottom_sheet_ok)
     public void onOkClicked() {
         boolean isAutoCompleteEmpty = true;
-        EditText searchInput =((EditText)getAutoCompleteFrag().getView()
-                .findViewById(R.id.place_autocomplete_search_input));
+        EditText searchInput =getAutoCompleteFrag().getView().findViewById(R.id.place_autocomplete_search_input);
         if (searchInput != null) {
             isAutoCompleteEmpty = searchInput.getText().toString().isEmpty();
         }
@@ -259,23 +236,12 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
             Snackbar.make(getView().findViewById(R.id.container), "Please fill in all the fields",
                     Snackbar.LENGTH_SHORT).show();
         } else {
-            ExpenseEntity expense = new ExpenseEntity();
-            expense.setDate(editTextDate.getText().toString());
-            expense.setName(searchInput.getText().toString());
-            expense.setPrice("$" + editTextExpense.getText().toString());
-
+            Expense expense = Expense.builder().setDate(editTextDate.getText().toString())
+                                               .setName(searchInput.getText().toString())
+                                               .setPrice("$" + editTextExpense.getText().toString())
+                                               .build();
             // save the expense
-            Single<ExpenseEntity> single = data.insert(expense);
-            single.subscribeOn(Schedulers.single())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Consumer<Expense>() {
-                        @Override
-                        public void accept(Expense expense) throws Exception {
-                            onDismissClicked();
-                            clearFields();
-                        }
-                    });
-            adapter.queryAsync();
+
         }
     }
 
@@ -345,12 +311,15 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         editTextExpense.setText("");
     }
 
-    @Override
-    public void onPlaceSelected(Place place) {
-    }
-
-    @Override
-    public void onError(Status status) {
-
+    private void updateEmptyView() {
+        if (!data.isEmpty()) {
+            // not empty
+            emptyView.setVisibility(View.GONE);
+        } else {
+            // empty
+            emptyImage.setImageDrawable(new IconDrawable(getContext(), Iconify.IconValue.zmdi_mood)
+                    .colorRes(android.R.color.tertiary_text_light)
+                    .sizeDp(32));
+        }
     }
 }

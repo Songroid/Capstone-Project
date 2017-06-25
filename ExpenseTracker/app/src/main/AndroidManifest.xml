@@ -4,7 +4,6 @@
 
     <application
         android:allowBackup="true"
-        android:name=".ExpenseApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -15,7 +14,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyB1Mlg-iiPJCK3b96reb-sOaHcQ7KBNi_0" />
 
-        <activity android:name=".activity.MainActivity">
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

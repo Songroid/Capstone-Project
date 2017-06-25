@@ -1,4 +1,4 @@
-package com.songjin.expensetracker.fragment;
+package com.songjin.expensetracker;
 
 
 import android.graphics.drawable.Drawable;
@@ -14,8 +14,6 @@ import android.widget.Toast;
 
 import com.malinskiy.materialicons.IconDrawable;
 import com.malinskiy.materialicons.Iconify;
-import com.songjin.expensetracker.R;
-import com.songjin.expensetracker.data.Expense;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -57,7 +55,7 @@ public class DetailFragment extends DialogFragment {
                 .colorRes(android.R.color.white)
                 .actionBarSize();
         toolbar.setNavigationIcon(naviIcon);
-        toolbar.setTitle(expense.getName());
+        toolbar.setTitle(expense.name());
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
