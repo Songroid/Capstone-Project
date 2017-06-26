@@ -5,8 +5,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MotionEvent;
 
-import com.songjin.expensetracker.ExpenseFragment;
-import com.songjin.expensetracker.R;
+import com.songjin.expensetracker.fragment.ExpenseFragment;
 
 import org.greenrobot.eventbus.EventBus;
 

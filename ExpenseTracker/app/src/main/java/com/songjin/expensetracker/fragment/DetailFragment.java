@@ -1,4 +1,4 @@
-package com.songjin.expensetracker;
+package com.songjin.expensetracker.fragment;
 
 
 import android.graphics.drawable.Drawable;
@@ -14,6 +14,8 @@ import android.widget.Toast;
 
 import com.malinskiy.materialicons.IconDrawable;
 import com.malinskiy.materialicons.Iconify;
+import com.songjin.expensetracker.R;
+import com.songjin.expensetracker.data.Expense;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;

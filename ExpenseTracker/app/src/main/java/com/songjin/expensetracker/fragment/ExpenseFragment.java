@@ -1,4 +1,4 @@
-package com.songjin.expensetracker;
+package com.songjin.expensetracker.fragment;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
@@ -12,12 +12,12 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.transition.Slide;
-import android.view.Gravity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,10 +34,16 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.malinskiy.materialicons.IconDrawable;
 import com.malinskiy.materialicons.Iconify;
+import com.songjin.expensetracker.ExpenseAdapter;
+import com.songjin.expensetracker.R;
+import com.songjin.expensetracker.data.Expense;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -58,6 +64,7 @@ import butterknife.Unbinder;
 
 public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConnectionFailedListener {
 
+    private static final String TAG = ExpenseFragment.class.getSimpleName();
     private static final String PLACE_FRAGMENT_TAG = "placeFragment";
 
     private Unbinder unbinder;
@@ -67,10 +74,10 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     private Calendar calendar;
 
     private ExpenseAdapter adapter;
+    private DatabaseReference database;
+    private List<Expense> data;
 
     private InputMethodManager imm;
-
-    private List<Expense> data;
 
     @BindView(R.id.main_toolbar) Toolbar toolbar;
     @BindView(R.id.addExpenseBottomSheet) FrameLayout bottomSheet;
@@ -78,6 +85,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     @BindView(R.id.expenseListView) RecyclerView listView;
     @BindView(R.id.emptyView) View emptyView;
     @BindView(R.id.emptyImage) ImageView emptyImage;
+    @BindView(R.id.swipeRefresh) SwipeRefreshLayout swipeRefresh;
 
     @BindView(R.id.edittext_date) EditText editTextDate;
     @BindView(R.id.edittext_expense) EditText editTextExpense;
@@ -97,6 +105,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         imm = (InputMethodManager) getActivity().getSystemService(
                 Activity.INPUT_METHOD_SERVICE);
 
+        database = FirebaseDatabase.getInstance().getReference();
         data = new ArrayList<>();
     }
 
@@ -143,7 +152,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         });
 
         // list setup
-        adapter = new ExpenseAdapter(getContext(), data);
+        adapter = new ExpenseAdapter(data);
         listView.setAdapter(adapter);
         listView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -183,6 +192,15 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
             ft.commit();
             fm.executePendingTransactions();
         }
+
+        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                database.addListenerForSingleValueEvent(getValueEventListener());
+            }
+        });
+
+        database.addValueEventListener(getValueEventListener());
     }
 
     @Override
@@ -218,15 +236,10 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         unbinder.unbind();
     }
 
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Toast.makeText(getContext(), connectionResult.getErrorMessage(), Toast.LENGTH_SHORT).show();
-    }
-
     @OnClick(R.id.bottom_sheet_ok)
     public void onOkClicked() {
         boolean isAutoCompleteEmpty = true;
-        EditText searchInput =getAutoCompleteFrag().getView().findViewById(R.id.place_autocomplete_search_input);
+        EditText searchInput = getAutoCompleteFrag().getView().findViewById(R.id.place_autocomplete_search_input);
         if (searchInput != null) {
             isAutoCompleteEmpty = searchInput.getText().toString().isEmpty();
         }
@@ -266,27 +279,6 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onExpenseClicked(ExpenseClickEvent event) {
-        Expense expense = event.getExpense();
-        if (expense != null) {
-            FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
-
-            Fragment detailFragment = getActivity().getSupportFragmentManager()
-                    .findFragmentByTag(DetailFragment.TAG);
-            if (detailFragment == null) {
-                detailFragment = DetailFragment.newInstance(expense);
-            }
-            Slide slideRight = new Slide(Gravity.RIGHT);
-            detailFragment.setEnterTransition(slideRight);
-            detailFragment.setExitTransition(slideRight);
-
-            ft.replace(R.id.fragment_holder, detailFragment);
-            ft.addToBackStack(null);
-            ft.commit();
-        }
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMotionEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             if (behavior.getState()==BottomSheetBehavior.STATE_EXPANDED) {
@@ -300,6 +292,15 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
             }
         }
     }
+
+    /** CONNECTION **/
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Toast.makeText(getContext(), connectionResult.getErrorMessage(), Toast.LENGTH_SHORT).show();
+    }
+
+    /** PRIVATE **/
 
     @Nullable
     private SupportPlaceAutocompleteFragment getAutoCompleteFrag() {
@@ -316,14 +317,14 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     }
 
     private void updateEmptyView() {
-        if (!data.isEmpty()) {
-            // not empty
-            emptyView.setVisibility(View.GONE);
-        } else {
-            // empty
-            emptyImage.setImageDrawable(new IconDrawable(getContext(), Iconify.IconValue.zmdi_mood)
-                    .colorRes(android.R.color.tertiary_text_light)
-                    .sizeDp(32));
+        if (emptyView != null) {
+            emptyView.setVisibility(adapter.getItemCount() > 0? View.GONE : View.VISIBLE);
+            if (emptyView.isShown()) {
+                // not empty
+                emptyImage.setImageDrawable(new IconDrawable(getContext(), Iconify.IconValue.zmdi_mood)
+                        .colorRes(android.R.color.tertiary_text_light)
+                        .sizeDp(32));
+            }
         }
     }
 
@@ -331,5 +332,37 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference(Expense.TAG);
         myRef.push().setValue(expense.toFirebaseValue());
+    }
+
+    @NonNull
+    private ValueEventListener getValueEventListener() {
+        return new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                data.clear();
+                for (DataSnapshot snapshot : dataSnapshot.child(Expense.TAG).getChildren()) {
+                    Expense expense = Expense.builder().setDate((String)snapshot.child(Expense.DATE).getValue())
+                            .setName((String)snapshot.child(Expense.NAME).getValue())
+                            .setPrice((String)snapshot.child(Expense.PRICE).getValue())
+                            .build();
+                    data.add(expense);
+                }
+                adapter.notifyDataSetChanged();
+                updateEmptyView();
+                stopRefreshing();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "onCancelled: " + databaseError.getMessage());
+                stopRefreshing();
+            }
+        };
+    }
+
+    private void stopRefreshing() {
+        if (swipeRefresh != null && swipeRefresh.isRefreshing()) {
+            swipeRefresh.setRefreshing(false);
+        }
     }
 }
