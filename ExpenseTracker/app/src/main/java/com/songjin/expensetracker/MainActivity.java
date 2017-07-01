@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ft.replace(R.id.fragment_holder, ExpenseFragment.newInstance());
+        ft.replace(R.id.fragment_holder, ExpenseFragment.newInstance(), ExpenseFragment.TAG);
         ft.commit();
     }
 

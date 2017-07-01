@@ -64,7 +64,7 @@ import butterknife.Unbinder;
 
 public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConnectionFailedListener {
 
-    private static final String TAG = ExpenseFragment.class.getSimpleName();
+    public static final String TAG = ExpenseFragment.class.getSimpleName();
     private static final String PLACE_FRAGMENT_TAG = "placeFragment";
 
     private Unbinder unbinder;
