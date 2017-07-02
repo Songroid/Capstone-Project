@@ -33,7 +33,11 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -78,6 +82,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     private List<Expense> data;
 
     private InputMethodManager imm;
+    private LatLng latLng;
 
     @BindView(R.id.main_toolbar) Toolbar toolbar;
     @BindView(R.id.addExpenseBottomSheet) FrameLayout bottomSheet;
@@ -107,6 +112,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
         database = FirebaseDatabase.getInstance().getReference();
         data = new ArrayList<>();
+        latLng = new LatLng(Expense.USA_LAT, Expense.USA_LNG);
     }
 
     @Override
@@ -187,6 +193,18 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
         if (placeFragment == null) {
             placeFragment = new SupportPlaceAutocompleteFragment();
+            placeFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+                @Override
+                public void onPlaceSelected(Place place) {
+                    Log.d(TAG, "onPlaceSelected is called");
+                    latLng = place.getLatLng();
+                }
+
+                @Override
+                public void onError(Status status) {
+                    Log.d(TAG, "onError is called");
+                }
+            });
             FragmentTransaction ft = fm.beginTransaction();
             ft.add(R.id.placeFragmentHolder, placeFragment, PLACE_FRAGMENT_TAG);
             ft.commit();
@@ -254,6 +272,8 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
             Expense expense = Expense.builder().setDate(editTextDate.getText().toString())
                                                .setName(searchInput.getText().toString())
                                                .setPrice("$" + editTextExpense.getText().toString())
+                                               .setLat(latLng.latitude)
+                                               .setLng(latLng.longitude)
                                                .build();
             // save the expense
             pushValue(expense);
@@ -341,9 +361,12 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
             public void onDataChange(DataSnapshot dataSnapshot) {
                 data.clear();
                 for (DataSnapshot snapshot : dataSnapshot.child(Expense.TAG).getChildren()) {
-                    Expense expense = Expense.builder().setDate((String)snapshot.child(Expense.DATE).getValue())
+                    Expense expense = Expense.builder().setId(snapshot.getKey())
+                            .setDate((String)snapshot.child(Expense.DATE).getValue())
                             .setName((String)snapshot.child(Expense.NAME).getValue())
                             .setPrice((String)snapshot.child(Expense.PRICE).getValue())
+                            .setLat((Double)snapshot.child(Expense.LAT).getValue())
+                            .setLng((Double)snapshot.child(Expense.LNG).getValue())
                             .build();
                     data.add(expense);
                 }
