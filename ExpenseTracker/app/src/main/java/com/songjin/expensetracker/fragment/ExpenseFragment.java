@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -19,10 +20,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -241,9 +244,21 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.main_menu, menu);
-        menu.findItem(R.id.share).setIcon(new IconDrawable(getContext(), Iconify.IconValue.zmdi_share)
+        MenuItem item = menu.findItem(R.id.share).setIcon(new IconDrawable(getContext(), Iconify.IconValue.zmdi_share)
                     .colorRes(android.R.color.white)
                     .actionBarSize());
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_SEND);
+                String list = TextUtils.join(", ", data);
+                sendIntent.putExtra(Intent.EXTRA_TEXT, list);
+                sendIntent.setType("text/plain");
+                startActivity(sendIntent);
+                return true;
+            }
+        });
         super.onCreateOptionsMenu(menu, inflater);
     }
 
