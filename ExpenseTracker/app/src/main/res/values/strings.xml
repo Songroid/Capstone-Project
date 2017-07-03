@@ -9,5 +9,8 @@
     <string name="dollar">$</string>
 
     <string name="empty_string">Add your first expense by pressing the fab</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
+    <string name="add_an_expense_content_desc">add an expense</string>
 
 </resources>

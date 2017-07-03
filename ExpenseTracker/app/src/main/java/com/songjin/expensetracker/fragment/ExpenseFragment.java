@@ -70,6 +70,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
     public static final String TAG = ExpenseFragment.class.getSimpleName();
     private static final String PLACE_FRAGMENT_TAG = "placeFragment";
+    private static final String IS_ADD_SHOWN_TAG = "isAddShown";
 
     private Unbinder unbinder;
 
@@ -84,6 +85,8 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     private InputMethodManager imm;
     private LatLng latLng;
 
+    private boolean isAddShown;
+
     @BindView(R.id.main_toolbar) Toolbar toolbar;
     @BindView(R.id.addExpenseBottomSheet) FrameLayout bottomSheet;
     @BindView(R.id.fab) FloatingActionButton fab;
@@ -97,8 +100,12 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
     @BindString(R.string.app_name) String appName;
 
-    public static ExpenseFragment newInstance() {
-        return new ExpenseFragment();
+    public static ExpenseFragment newInstance(boolean isAddShown) {
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(IS_ADD_SHOWN_TAG, isAddShown);
+        ExpenseFragment fragment = new ExpenseFragment();
+        fragment.setArguments(bundle);
+        return fragment;
     }
 
     @Override
@@ -113,6 +120,9 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         database = FirebaseDatabase.getInstance().getReference();
         data = new ArrayList<>();
         latLng = new LatLng(Expense.USA_LAT, Expense.USA_LNG);
+
+        Bundle bundle = getArguments();
+        isAddShown = bundle.getBoolean(IS_ADD_SHOWN_TAG);
     }
 
     @Override
@@ -127,7 +137,8 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
         // bottom layout setup
         behavior = BottomSheetBehavior.from(bottomSheet);
-        behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        behavior.setState(isAddShown? BottomSheetBehavior.STATE_EXPANDED :
+                                      BottomSheetBehavior.STATE_HIDDEN);
         behavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
@@ -145,6 +156,9 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         });
 
         // fab setup
+        if (isAddShown) {
+            fab.hide();
+        }
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
