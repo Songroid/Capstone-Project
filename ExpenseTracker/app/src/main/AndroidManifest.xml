@@ -16,7 +16,8 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyB1Mlg-iiPJCK3b96reb-sOaHcQ7KBNi_0" />
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity"
+            android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -24,7 +25,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".ExpenseWidget">
+        <receiver android:name="widget.ExpenseWidget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -33,6 +34,9 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/expense_widget_info" />
         </receiver>
+        <service android:name="widget.ExpenseWidgetService"
+                 android:exported="false"
+                 android:permission="android.permission.BIND_REMOTEVIEWS" />
     </application>
 
 </manifest>

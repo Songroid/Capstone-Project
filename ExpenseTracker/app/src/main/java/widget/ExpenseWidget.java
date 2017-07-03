@@ -1,33 +1,34 @@
-package com.songjin.expensetracker;
+package widget;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.NonNull;
 import android.widget.RemoteViews;
+
+import com.songjin.expensetracker.MainActivity;
+import com.songjin.expensetracker.R;
 
 /**
  * Implementation of App Widget functionality.
  */
 public class ExpenseWidget extends AppWidgetProvider {
 
-    private static final int MAIN_LAUNCH_PI = 100;
-    private static final int ADD_LAUNCH_PI = 200;
-
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
                                 int appWidgetId) {
 
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.expense_widget);
+        setRemoteAdapter(context, views);
 
         // Pressing the header opens the main activity
         Intent launch = new Intent(context, MainActivity.class);
-        views.setOnClickPendingIntent(R.id.widget_header, getPendingIntent(context, MAIN_LAUNCH_PI, launch, false));
-        // Pressing the header opens the main activity with add fragment shown
-        views.setOnClickPendingIntent(R.id.widget_plus, getPendingIntent(context, ADD_LAUNCH_PI, launch, true));
+        views.setOnClickPendingIntent(R.id.widget_title, PendingIntent.getActivity(context, 0, launch, PendingIntent.FLAG_UPDATE_CURRENT));
 
         // Instruct the widget manager to update the widget
+        appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list);
         appWidgetManager.updateAppWidget(appWidgetId, views);
     }
 
@@ -49,9 +50,8 @@ public class ExpenseWidget extends AppWidgetProvider {
         // Enter relevant functionality for when the last widget is disabled
     }
 
-    private static PendingIntent getPendingIntent(Context context, int id, Intent intent, boolean isAddShown) {
-        intent.putExtra(MainActivity.IS_ADD_SHOWN_TAG, isAddShown);
-        return PendingIntent.getActivity(context, id, intent, 0);
+    private static void setRemoteAdapter(Context context, @NonNull final RemoteViews views) {
+        views.setRemoteAdapter(R.id.widget_list, new Intent(context, ExpenseWidgetService.class));
     }
 }
 

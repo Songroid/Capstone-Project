@@ -2,6 +2,8 @@ package com.songjin.expensetracker.fragment;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -64,13 +66,13 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
+import widget.ExpenseWidget;
 
 
 public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConnectionFailedListener {
 
     public static final String TAG = ExpenseFragment.class.getSimpleName();
     private static final String PLACE_FRAGMENT_TAG = "placeFragment";
-    private static final String IS_ADD_SHOWN_TAG = "isAddShown";
 
     private Unbinder unbinder;
 
@@ -85,8 +87,6 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     private InputMethodManager imm;
     private LatLng latLng;
 
-    private boolean isAddShown;
-
     @BindView(R.id.main_toolbar) Toolbar toolbar;
     @BindView(R.id.addExpenseBottomSheet) FrameLayout bottomSheet;
     @BindView(R.id.fab) FloatingActionButton fab;
@@ -100,12 +100,8 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
     @BindString(R.string.app_name) String appName;
 
-    public static ExpenseFragment newInstance(boolean isAddShown) {
-        Bundle bundle = new Bundle();
-        bundle.putBoolean(IS_ADD_SHOWN_TAG, isAddShown);
-        ExpenseFragment fragment = new ExpenseFragment();
-        fragment.setArguments(bundle);
-        return fragment;
+    public static ExpenseFragment newInstance() {
+        return new ExpenseFragment();
     }
 
     @Override
@@ -117,12 +113,11 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         imm = (InputMethodManager) getActivity().getSystemService(
                 Activity.INPUT_METHOD_SERVICE);
 
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         database = FirebaseDatabase.getInstance().getReference();
+
         data = new ArrayList<>();
         latLng = new LatLng(Expense.USA_LAT, Expense.USA_LNG);
-
-        Bundle bundle = getArguments();
-        isAddShown = bundle.getBoolean(IS_ADD_SHOWN_TAG);
     }
 
     @Override
@@ -137,8 +132,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
         // bottom layout setup
         behavior = BottomSheetBehavior.from(bottomSheet);
-        behavior.setState(isAddShown? BottomSheetBehavior.STATE_EXPANDED :
-                                      BottomSheetBehavior.STATE_HIDDEN);
+        behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         behavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
@@ -156,9 +150,6 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         });
 
         // fab setup
-        if (isAddShown) {
-            fab.hide();
-        }
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -259,6 +250,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
     @Override
     public void onStop() {
         super.onStop();
+        updateWidget();
         EventBus.getDefault().unregister(this);
     }
 
@@ -387,6 +379,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
                 adapter.notifyDataSetChanged();
                 updateEmptyView();
                 stopRefreshing();
+                updateWidget();
             }
 
             @Override
@@ -401,5 +394,11 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         if (swipeRefresh != null && swipeRefresh.isRefreshing()) {
             swipeRefresh.setRefreshing(false);
         }
+    }
+
+    private void updateWidget() {
+        int ids[] = AppWidgetManager.getInstance(getContext()).getAppWidgetIds(
+                new ComponentName(getContext(), ExpenseWidget.class));
+        AppWidgetManager.getInstance(getContext()).notifyAppWidgetViewDataChanged(ids, R.id.widget_list);
     }
 }

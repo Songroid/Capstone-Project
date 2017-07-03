@@ -12,20 +12,16 @@ import org.greenrobot.eventbus.EventBus;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String IS_ADD_SHOWN_TAG = "isAddedShownActivity";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        boolean isAddShown = getIntent().getBooleanExtra(IS_ADD_SHOWN_TAG, false);
-
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 
         Fragment expenseFragment = getSupportFragmentManager().findFragmentByTag(ExpenseFragment.TAG);
         if (expenseFragment == null) {
-            expenseFragment = ExpenseFragment.newInstance(isAddShown);
+            expenseFragment = ExpenseFragment.newInstance();
         }
         ft.replace(R.id.fragment_holder, expenseFragment, ExpenseFragment.TAG);
         ft.commit();
