@@ -116,7 +116,6 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
         imm = (InputMethodManager) getActivity().getSystemService(
                 Activity.INPUT_METHOD_SERVICE);
 
-        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         database = FirebaseDatabase.getInstance().getReference();
 
         data = new ArrayList<>();
@@ -287,7 +286,7 @@ public class ExpenseFragment extends Fragment implements GoogleApiClient.OnConne
 
         if (isAutoCompleteEmpty || isDateEmpty || isExpenseEmpty) {
             // require no empty fields
-            Snackbar.make(getView().findViewById(R.id.container), "Please fill in all the fields",
+            Snackbar.make(getView().findViewById(R.id.container), R.string.fill_in_all_fields,
                     Snackbar.LENGTH_SHORT).show();
         } else {
             Expense expense = Expense.builder().setDate(editTextDate.getText().toString())

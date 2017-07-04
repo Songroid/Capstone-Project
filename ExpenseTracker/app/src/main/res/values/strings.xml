@@ -12,5 +12,6 @@
     <string name="appwidget_text">EXAMPLE</string>
     <string name="add_widget">Add widget</string>
     <string name="add_an_expense_content_desc">add an expense</string>
+    <string name="fill_in_all_fields">Please fill in all the fields</string>
 
 </resources>
